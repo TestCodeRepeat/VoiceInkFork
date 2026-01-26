@@ -34,6 +34,12 @@ class LicenseViewModel: ObservableObject {
     }
 
     private func loadLicenseState() {
+        // TEMPORARY: Disable licensing for local development
+        // TODO: Remove this bypass before production release
+        licenseState = .licensed
+
+        /* Original licensing code - commented out for local development:
+
         // Check for existing license key
         if let storedLicenseKey = licenseManager.licenseKey {
             self.licenseKey = storedLicenseKey
@@ -69,6 +75,7 @@ class LicenseViewModel: ObservableObject {
             // No trial has been started yet - start it now
             startTrial()
         }
+        */
     }
     
     var canUseApp: Bool {

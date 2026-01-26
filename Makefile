@@ -3,7 +3,7 @@ DEPS_DIR := $(HOME)/VoiceInk-Dependencies
 WHISPER_CPP_DIR := $(DEPS_DIR)/whisper.cpp
 FRAMEWORK_PATH := $(WHISPER_CPP_DIR)/build-apple/whisper.xcframework
 
-.PHONY: all clean whisper setup build check healthcheck help dev run
+.PHONY: all clean whisper setup build build-signed check healthcheck help dev run installer install
 
 # Default target
 all: check build
@@ -52,6 +52,39 @@ run:
 		open "$$APP_PATH"; \
 	else \
 		echo "VoiceInk.app not found. Please run 'make build' first."; \
+		exit 1; \
+	fi
+
+# Build with developer signing (Release configuration)
+build-signed: setup
+	xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Release build
+
+# Create DMG installer
+installer: build-signed
+	@echo "Creating installer..."
+	@mkdir -p installer
+	@APP_PATH=$$(find "$$HOME/Library/Developer/Xcode/DerivedData/VoiceInk-"* -path "*/Release/VoiceInk.app" -type d | head -1) && \
+	if [ -n "$$APP_PATH" ]; then \
+		rm -rf installer/VoiceInk.app; \
+		cp -R "$$APP_PATH" installer/; \
+		rm -f VoiceInk-Local.dmg; \
+		hdiutil create -volname "VoiceInk Local" -srcfolder installer -ov -format UDZO VoiceInk-Local.dmg; \
+		echo "Created: VoiceInk-Local.dmg"; \
+	else \
+		echo "VoiceInk.app not found. Build failed?"; \
+		exit 1; \
+	fi
+
+# Install to /Applications
+install: build-signed
+	@echo "Installing VoiceInk to /Applications..."
+	@APP_PATH=$$(find "$$HOME/Library/Developer/Xcode/DerivedData/VoiceInk-"* -path "*/Release/VoiceInk.app" -type d | head -1) && \
+	if [ -n "$$APP_PATH" ]; then \
+		rm -rf /Applications/VoiceInk.app; \
+		cp -R "$$APP_PATH" /Applications/; \
+		echo "Installed to /Applications/VoiceInk.app"; \
+	else \
+		echo "VoiceInk.app not found. Build failed?"; \
 		exit 1; \
 	fi
 
